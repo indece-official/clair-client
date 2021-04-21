@@ -74,7 +74,7 @@ func main() {
 		return
 	}
 
-	imageIdentifiers, err := docker.ParseImageIdentifiers(*flagImage)
+	imageIdentifiers, err := docker.ParseImageIdentifiers(*flagImage, dockerClient.GetRegistry())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing docker image name: %s\n", err)
 

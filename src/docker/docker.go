@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/docker/distribution/manifest/schema2"
@@ -18,6 +19,9 @@ type ImageIdentifiers struct {
 	Repository string
 	Tag        string
 }
+
+var RegexpProtocol = regexp.MustCompile("^(http[s]?://)")
+var RegexpDoubleSlash = regexp.MustCompile("/{2,}")
 
 func parseBearer(bearer string) map[string]string {
 	out := make(map[string]string)
@@ -41,10 +45,24 @@ func parseBearer(bearer string) map[string]string {
 	return out
 }
 
-func ParseImageIdentifiers(dockerImagePath string) (*ImageIdentifiers, error) {
+func ParseImageIdentifiers(dockerImagePath string, registryDomain string) (*ImageIdentifiers, error) {
+	registryDomain = strings.ToLower(registryDomain)
+	registryDomain = RegexpProtocol.ReplaceAllString(registryDomain, "")
+	registryDomain = strings.TrimRight(registryDomain, "/")
+
+	dockerImagePath = strings.ToLower(dockerImagePath)
+	dockerImagePath = RegexpProtocol.ReplaceAllString(dockerImagePath, "")
+	dockerImagePath = RegexpDoubleSlash.ReplaceAllString(dockerImagePath, "/")
+
+	if strings.HasPrefix(dockerImagePath, registryDomain) {
+		// Remove Domain
+		dockerImagePath = strings.Replace(dockerImagePath, registryDomain, "", 1)
+	}
+
 	dockerImagePathParts := strings.SplitN(dockerImagePath, ":", 2)
 	repository := ""
 	tag := ""
+
 	switch len(dockerImagePathParts) {
 	case 1:
 		repository = dockerImagePathParts[0]
@@ -57,7 +75,7 @@ func ParseImageIdentifiers(dockerImagePath string) (*ImageIdentifiers, error) {
 	}
 
 	return &ImageIdentifiers{
-		Repository: repository,
+		Repository: strings.Trim(repository, "/"),
 		Tag:        tag,
 	}, nil
 }

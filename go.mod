@@ -9,4 +9,5 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.1.1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/stretchr/testify v1.7.0 // indirect
 )
