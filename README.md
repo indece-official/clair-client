@@ -65,6 +65,15 @@ Found 0 vulnerabilities with severity 'Medium' or more (0 whitelisted)
 
 Exits with code 1 when non-whitelisted vulnerabilities with an severity above `max-severity` were found.
 
+### Whitelist file
+Example:
+
+```
+# This is a comment
+CVE-2021-30139
+CVE-2020-8284
+```
+
 ### Tested Clair-Servers
 | Version | Status |
 | --- | --- |
