@@ -19,22 +19,23 @@ type ImageIdentifiers struct {
 	Tag        string
 }
 
-// This function parses the Www-Authenticate header provided in the challenge
-// It has the following format
-// Bearer realm="https://gitlab.com/jwt/auth",service="container_registry",scope="repository:andrew18/container-test:pull"
-func parseBearer(bearer []string) map[string]string {
+func parseBearer(bearer string) map[string]string {
 	out := make(map[string]string)
-	for _, b := range bearer {
-		for _, s := range strings.Split(b, " ") {
-			if s == "Bearer" {
+
+	for _, s := range strings.Split(bearer, " ") {
+		if s == "Bearer" {
+			continue
+		}
+		for _, params := range strings.Split(s, ",") {
+			fields := strings.Split(params, "=")
+			if len(fields) < 2 || fields[0] == "" {
 				continue
 			}
-			for _, params := range strings.Split(s, ",") {
-				fields := strings.Split(params, "=")
-				key := fields[0]
-				val := strings.Replace(fields[1], "\"", "", -1)
-				out[key] = val
-			}
+
+			key := fields[0]
+			val := strings.Replace(fields[1], "\"", "", -1)
+
+			out[key] = val
 		}
 	}
 	return out
@@ -121,20 +122,20 @@ func (d *DockerClient) GetAuthToken() (string, error) {
 	}
 
 	// This has the various things we'll need to parse and use in the request
-	wwwAuthenticate, ok := resp.Header["Www-Authenticate"]
-	if !ok || len(wwwAuthenticate) == 0 {
+	wwwAuthenticate := resp.Header.Get("Www-Authenticate")
+	if wwwAuthenticate == "" {
 		// No authentication required
 
 		return "", nil
 	}
 
-	if strings.HasPrefix(strings.ToUpper(wwwAuthenticate[0]), "BASIC") {
+	if strings.HasPrefix(strings.ToUpper(wwwAuthenticate), "BASIC") {
 		credentials := fmt.Sprintf("%s:%s", *flagDockerUsername, *flagDockerPassword)
 		credentialsBase64 := base64.StdEncoding.EncodeToString([]byte(credentials))
 
 		return fmt.Sprintf("Basic %s", credentialsBase64), nil
-	} else if strings.HasPrefix(strings.ToUpper(wwwAuthenticate[0]), "BEARER") {
-		params := parseBearer(resp.Header["Www-Authenticate"])
+	} else if strings.HasPrefix(strings.ToUpper(wwwAuthenticate), "BEARER") {
+		params := parseBearer(wwwAuthenticate)
 
 		// Get the token
 		urlRealmStr := fmt.Sprintf("%s?", params["realm"])
@@ -184,6 +185,6 @@ func (d *DockerClient) GetAuthToken() (string, error) {
 
 		return fmt.Sprintf("Bearer %s", token), nil
 	} else {
-		return "", fmt.Errorf("unsupported auth method %s", wwwAuthenticate[0])
+		return "", fmt.Errorf("unsupported auth method %s", wwwAuthenticate)
 	}
 }
