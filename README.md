@@ -78,6 +78,7 @@ CVE-2020-8284
 | Version | Status |
 | --- | --- |
 | v4.0.5 | OK |
+| v4.1.0 | OK |
 
 ## Development
 ### Snapshot build
