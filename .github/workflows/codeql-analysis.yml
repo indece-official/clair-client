@@ -51,6 +51,7 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
     - run: |
+        go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.5.0
         make --always-make
 
     - name: Perform CodeQL Analysis
